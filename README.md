@@ -10,3 +10,34 @@ In the past some attempts were available which is trying to address the probelm.
 The core of the software is the class “lookuptable” which defines the translation-matrix from bibtex to Wikisyntax. For example, the term “@article" from Bibtex is equal to "{{cite journal" in Wikisyntax. The main loop goes through each line and and transforms the content with the lookuptable. Sometimes, a problem is there and the parser prints out “??error??” which means that something is wrong. I've tested out an example with 10 bibtex entries and the program generates the appropriate Wikisyntax format. In comparison to manual conversion it is a huge improvement. Putting the Wikisyntax for a journal article together by hand is not very funny.
 
 The algorithm was implemented in the C++ language which is a great tool for software prototyping. In contrast to a professional programming language the advantage is, that no FPGA is needed to run the algorithm. A normal Von-neumann CPU is enough. If somebody want's to fork this project, you're welcome. The programming language itself must stay on C++. That means, Python, Java or AWK is not an option for me. What can be improved is maybe the matching algorithm. Also a commandline option is missing right now.
+
+**Example**
+```
+input.bib
+===========
+@inproceedings{white2000,
+  title={ArgivePlexus: Multimodal, introspective communication},
+  author={N. White and J. Hennessy},
+  booktitle={Journal of Flexible, Stable Random Methodologies},
+  pages={1--11},
+  volume={9},
+  year={2000}
+}
+
+output.wiki
+===========
+<ref name="white2000">{{cite conference
+ |title=ArgivePlexus: Multimodal, introspective communication
+ |author=N. White and J. Hennessy
+ |conference=Journal of Flexible, Stable Random Methodologies
+ |title=Journal of Flexible, Stable Random Methodologies
+ |pages=1--11
+ |volume=9
+ |year=2000
+}}</ref>
+
+<ref>{{cite conference |title=ArgivePlexus: Multimodal, introspective
+ communication |author=N. White and J. Hennessy |conference=Journal of 
+Flexible, Stable Random Methodologies |title=Journal of Flexible, Stable
+ Random Methodologies |pages=1--11 |volume=9 |year=2000}}</ref>
+```

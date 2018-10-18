@@ -7,12 +7,11 @@ changelog:
   2018-10-15 minor modication in filename handling
   2018-10-15 shortformat
   2018-10-16 <anchor> tag in fullmode
+  2018-10-16 simplify "for loop", put error message to output
+  2018-10-17 UML diagram created
 to do: 
-  - context free grammar, bnf bibtext
-  - in Lineparser::run() subfunction which gets linenumber and lookuptablenumber 
-     -> new project from scratch too much changes
+  - context free grammar, bnf parser (very complicated, perhaps not needed)
 */
-
 #include <iostream>
 #include <string>
 #include <complex>
@@ -60,9 +59,9 @@ public:
   Lookuptable() {
     mytable.push_back({"header","@article","{{cite journal"});
     mytable.push_back({"header","@inproceedings","{{cite conference"});
-    mytable.push_back({"header","@phdthesis","{{cite thesis| type = PhD"});
+    mytable.push_back({"header","@phdthesis","{{cite thesis |type = PhD"});
     mytable.push_back({"header","@techreport","{{cite techreport"});
-
+    
     mytable.push_back({"field","booktitle","conference"});
     mytable.push_back({"field","title","title"});
     mytable.push_back({"field","author","author"});
@@ -76,12 +75,13 @@ public:
     mytable.push_back({"field","institution","institution"});
   }
 };
-  
-class Lineparser {
+
+class Converter {
 public:
+  Textfile mytextfile;
   Lookuptable mylookuptable;
   bool fullformat;
-  
+  bool parsesuccess;
   /// extract text between characters
   std::string stripline(std::string text, std::string leftsymbol, std::string rightsymbol) {
     int p1=text.find(leftsymbol);
@@ -93,62 +93,52 @@ public:
     if (line.find(s)!= std::string::npos)
       return true;
     else return false;
+  }  
+  void parseline(int inputlineid, int lookupid) {
+    std::string result;
+    auto type=mylookuptable.mytable[lookupid].type;
+    auto wikisyntax=mylookuptable.mytable[lookupid].wikisyntax;
+    auto line=mytextfile.text[inputlineid];
+    if (type=="header" and fullformat==true) {
+      result+="<ref name=\"";
+      result+=stripline(line,"{",",");
+      result+="\">";
+      result+=wikisyntax;
+    }
+    if (type=="header" and fullformat==false) {
+      result+="<ref>";
+      result+=wikisyntax;
+    }
+    if (type=="field") {
+      result=" |";
+      result+=wikisyntax;
+      result +="=";
+      result +=stripline(line,"{","}");     
+    }
+    if (fullformat==true)
+      result+="\n"; // linebreak
+    mytextfile.output.push_back(result); // store to file
+    
   }
-  std::string run(std::string line) {
-    std::string result="??parseerror??";
-    result +=line;
-    /// match lookuptable against line
-    for (auto i=0;i<mylookuptable.mytable.size();i++) {
-      if (findstring(line, mylookuptable.mytable[i].bibtex)) {
-        if (mylookuptable.mytable[i].type=="header") {
-          if (fullformat==true) {
-            // set anchor for reference
-            result=""; // clear variable
-            result+="<ref name=\"";
-            result+=stripline(line,"{",",");
-            result+="\" />\n";
-            // name for reference
-            result+="<ref name=\"";
-            result+=stripline(line,"{",",");
-            result+="\">";
-          }
-          else { // small reference tag
-            result=""; // clear variable
-            result+="<ref>";
-          }
-          result+=mylookuptable.mytable[i].wikisyntax;
-        }
-        if (mylookuptable.mytable[i].type=="field") {
-          result=" |";
-          result +=mylookuptable.mytable[i].wikisyntax;
-          result +="=";
-          result +=stripline(line,"{","}");     
-          break; // only search for first entry in table
+  void formattextfile(bool _fullformat) {
+    fullformat=_fullformat;
+    for (auto i=0;i<mytextfile.text.size();i++) {
+      parsesuccess=false;
+      for (auto k=0;k<mylookuptable.mytable.size();k++) { // match lookuptable
+        if (findstring(mytextfile.text[i], mylookuptable.mytable[k].bibtex)) {
+          parseline(i,k);
+          parsesuccess=true;
         }
       }
-      if (line.find("}")== 0) // closing brackets at position 0
-        result="}}</ref>\n";
-    }
-    if (fullformat==true) result+="\n";
-    return result;
-  }
-};
-
-class Converter {
-public:
-  Textfile mytextfile;
-  Lineparser mylineparser;
-  int verbose=0; //1==on
-
-  void formattextfile(bool fullformat) {
-    mylineparser.fullformat=fullformat;
-    for (auto i=0;i<mytextfile.text.size();i++) { // go through text
-      auto line=mytextfile.text[i];
-      auto wikisyntax=mylineparser.run(line);
-      if (verbose==1) 
-        std::cout<<i<<" "<<line<<"\n";
-      mytextfile.output.push_back(wikisyntax); // store to file
-    }
+      if (mytextfile.text[i].find("}")== 0) { // closing brackets at position 0
+        mytextfile.output.push_back("}}</ref>\n\n"); // store to file
+        parsesuccess=true;
+      }
+      if (parsesuccess==false) {
+        std::string result="??error?? "+std::to_string(i);
+        mytextfile.output.push_back(result); // store to file
+      }
+    }    
   }
   Converter() {
     mytextfile.readfromfile();

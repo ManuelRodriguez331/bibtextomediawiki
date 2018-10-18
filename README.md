@@ -12,6 +12,7 @@ The core of the software is the class “lookuptable” which defines the transl
 The algorithm was implemented in the C++ language which is a great tool for software prototyping. In contrast to a professional programming language the advantage is, that no FPGA is needed to run the algorithm. A normal Von-neumann CPU is enough. If somebody want's to fork this project, you're welcome. The programming language itself must stay on C++. That means, Python, Java or AWK is not an option for me. What can be improved is maybe the matching algorithm. Also a commandline option is missing right now.
 
 **Example**
+
 ```
 input.bib
 ===========
@@ -41,3 +42,7 @@ output.wiki
 Flexible, Stable Random Methodologies |title=Journal of Flexible, Stable
  Random Methodologies |pages=1--11 |volume=9 |year=2000}}</ref>
 ```
+
+**UML classdiagram**
+
+![UML](/uml.png)

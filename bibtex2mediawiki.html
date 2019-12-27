@@ -6,11 +6,12 @@
 <script type="text/javascript">
 /*
 Bibtex to mediawiki converter
-  
+
 */
 
 // global variables  
-var version=0.1
+var version=0.2
+
 var Item = function(type,bibtex,wikisyntax) {
   this.type = type;
   this.bibtex = bibtex;
@@ -18,10 +19,12 @@ var Item = function(type,bibtex,wikisyntax) {
 };
 
 var item = [
-  new Item("header","@article","<ref>{{cite journal"),
-  new Item("header","@inproceedings","<ref>{{cite conference"),
-  new Item("header","@phdthesis","<ref>{{cite thesis |type = PhD"),
-  new Item("header","@techreport","<ref>{{cite techreport"),
+  new Item("header","@article","<ref>{{Citation"),
+  new Item("header","@book","<ref>{{Citation"),
+  new Item("header","@inproceedings","<ref>{{Citation"),
+  new Item("header","@phdthesis","<ref>{{Citation"),
+  new Item("header","@techreport","<ref>{{Citation"),
+  
   new Item("field","booktitle","conference"),
   new Item("field","title","title"),
   new Item("field","author","author"),
@@ -34,13 +37,18 @@ var item = [
   new Item("field","volume","volume"),
   new Item("field","institution","institution"),
   new Item("field","number","number"),
+  new Item("field","doi","doi"),
+  new Item("field","url","url"),
+  
   new Item("footer","}","}}</ref>\n\n"),
+
 ];
 
 
 function matchitem(str) {
   // searches for str in item, returns itemid or false
   result=false
+
   for (var i=0;i<item.length;i++) { 
     if(str.indexOf(item[i].bibtex)!=-1) { 
       result=i
@@ -54,11 +62,14 @@ function matchitem(str) {
 
 function stripline(text,leftsymbol,rightsymbol) {
   // extract text between characters
-  var p1=text.indexOf(leftsymbol)
-  var p2=text.indexOf(rightsymbol,p1+1)
-  return text.substring(p1+1,p2)
+  var p1=text.indexOf(leftsymbol)+1
+  var p2=text.indexOf(rightsymbol)
+  return text.substring(p1,p2)
 }
+
+
 function parseline(str,lookupid) {
+  // bibtext to mediawiki
   var result=""
   var type=item[lookupid].type
   var wikisyntax=item[lookupid].wikisyntax
@@ -72,6 +83,9 @@ function parseline(str,lookupid) {
   return result
 }
 
+
+
+
 function buttonconvert() {
   document.getElementById('outputbox').value = ""
   var lines=document.getElementById("inputbox").value.split("\n")
@@ -84,13 +98,14 @@ function buttonconvert() {
 }
 
 function buttondebug() {
+  var i=0
   document.getElementById('outputbox').value = ""
   var lines=document.getElementById("inputbox").value.split("\n")
-  var i=0
+  
   var lookupid=matchitem(lines[i])
   var convert=parseline(lines[i],lookupid)
-  var text="debug mode\n-----------\n"
-  text+=i+" "+lookupid+" "+convert
+  var text="debug mode for line "+i+"\n-----------------------\n"
+  text+=lookupid+" "+convert
   document.getElementById('outputbox').value +=text
 }
 
@@ -98,8 +113,9 @@ function buttondebug() {
 function buttonreset() {
   // version info
   document.getElementById('labelversion').innerHTML = "version "+version
+
   // default bibtex input
-  var defaultbibtex = `@inproceedings{white2000,
+  var text = `@inproceedings{white2000,
   title={ArgivePlexus: Multimodal, introspective communication},
   author={N. White and J. Hennessy},
   booktitle={Journal of Flexible, Stable Random Methodologies},
@@ -107,9 +123,8 @@ function buttonreset() {
   volume={9},
   year={2000}
 }
-  ` // end multiline string
-  document.getElementById('inputbox').value = defaultbibtex
-  
+  ` // <----------- end multiline string
+  document.getElementById('inputbox').value = text
   buttonconvert()
 }
 
@@ -122,7 +137,7 @@ function buttonreset() {
   <label id="labelversion"></label><br>
 
   <p>
-  <textarea id="inputbox" cols="50" rows="10"> </textarea><textarea id="outputbox" cols="50" rows="10"></textarea>
+  <textarea id="inputbox" cols="55" rows="13"> </textarea><textarea id="outputbox" cols="55" rows="13"></textarea>
   <p>
   <input type="button" name="submit" value="convert" onclick="buttonconvert();" />
   <input type="button" name="submit" value="debug" onclick="buttondebug();" />

@@ -1,0 +1,137 @@
+<!doctype html>
+<html> 
+<head>
+<meta charset="utf-8">
+<title>Bibtex to mediawiki converter</title>
+<script type="text/javascript">
+/*
+Bibtex to mediawiki converter
+  
+*/
+
+// global variables  
+var version=0.1
+var Item = function(type,bibtex,wikisyntax) {
+  this.type = type;
+  this.bibtex = bibtex;
+  this.wikisyntax = wikisyntax;
+};
+
+var item = [
+  new Item("header","@article","<ref>{{cite journal"),
+  new Item("header","@inproceedings","<ref>{{cite conference"),
+  new Item("header","@phdthesis","<ref>{{cite thesis |type = PhD"),
+  new Item("header","@techreport","<ref>{{cite techreport"),
+  new Item("field","booktitle","conference"),
+  new Item("field","title","title"),
+  new Item("field","author","author"),
+  new Item("field","journal","journal"),
+  new Item("field","pages","pages"),
+  new Item("field","year","year"),
+  new Item("field","publisher","publisher"),
+  new Item("field","organization","publisher"),
+  new Item("field","school","publisher"),
+  new Item("field","volume","volume"),
+  new Item("field","institution","institution"),
+  new Item("field","number","number"),
+  new Item("footer","}","}}</ref>\n\n"),
+];
+
+
+function matchitem(str) {
+  // searches for str in item, returns itemid or false
+  result=false
+  for (var i=0;i<item.length;i++) { 
+    if(str.indexOf(item[i].bibtex)!=-1) { 
+      result=i
+      break
+    }
+  } 
+  return result
+}
+
+
+
+function stripline(text,leftsymbol,rightsymbol) {
+  // extract text between characters
+  var p1=text.indexOf(leftsymbol)
+  var p2=text.indexOf(rightsymbol,p1+1)
+  return text.substring(p1+1,p2)
+}
+function parseline(str,lookupid) {
+  var result=""
+  var type=item[lookupid].type
+  var wikisyntax=item[lookupid].wikisyntax
+  if(type=="header" || type=="footer") {
+    result+=wikisyntax
+  }
+  else if(type=="field") {
+    result+=" |"+wikisyntax+"=" 
+    result+=stripline(str,"{","}")
+  }
+  return result
+}
+
+function buttonconvert() {
+  document.getElementById('outputbox').value = ""
+  var lines=document.getElementById("inputbox").value.split("\n")
+  for (var i=0;i<lines.length;i++) { 
+    var lookupid=matchitem(lines[i])
+    var text=parseline(lines[i],lookupid)  
+    document.getElementById('outputbox').value +=text 
+  }
+  
+}
+
+function buttondebug() {
+  document.getElementById('outputbox').value = ""
+  var lines=document.getElementById("inputbox").value.split("\n")
+  var i=0
+  var lookupid=matchitem(lines[i])
+  var convert=parseline(lines[i],lookupid)
+  var text="debug mode\n-----------\n"
+  text+=i+" "+lookupid+" "+convert
+  document.getElementById('outputbox').value +=text
+}
+
+
+function buttonreset() {
+  // version info
+  document.getElementById('labelversion').innerHTML = "version "+version
+  // default bibtex input
+  var defaultbibtex = `@inproceedings{white2000,
+  title={ArgivePlexus: Multimodal, introspective communication},
+  author={N. White and J. Hennessy},
+  booktitle={Journal of Flexible, Stable Random Methodologies},
+  pages={1--11},
+  volume={9},
+  year={2000}
+}
+  ` // end multiline string
+  document.getElementById('inputbox').value = defaultbibtex
+  
+  buttonconvert()
+}
+
+</script>
+</head>
+
+<body>
+<h3>BibTeX to MediaWiki converter</h3>
+<form name="form1">
+  <label id="labelversion"></label><br>
+
+  <p>
+  <textarea id="inputbox" cols="50" rows="10"> </textarea><textarea id="outputbox" cols="50" rows="10"></textarea>
+  <p>
+  <input type="button" name="submit" value="convert" onclick="buttonconvert();" />
+  <input type="button" name="submit" value="debug" onclick="buttondebug();" />
+  <input type="button" name="submit" value="reset" onclick="buttonreset();" />
+</form>  
+
+</body>
+</html>
+
+<script language="javascript" type="text/javascript">
+  buttonreset()
+</script>

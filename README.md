@@ -15,6 +15,13 @@ The software is in a beta stadium, which means, that sometimes a parsing error i
 ![screenshot](/screenshot.png)
 
 ### Changelog
+version 0.3
+
+- convert more than one bibtex entry if an empty line is between them
+- remove false as return value
+- improved debug mode
+- change "citation" into "cite journal"
+
 version 0.2
 
 - @book is recognized

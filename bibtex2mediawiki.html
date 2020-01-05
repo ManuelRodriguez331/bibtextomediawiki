@@ -8,15 +8,13 @@
 Bibtex to mediawiki converter
 
 */
-
 // global variables  
-var version=0.3
-
+var version=0.54
 var Item = function(type,bibtex,wikisyntax) {
-  this.type = type;
-  this.bibtex = bibtex;
-  this.wikisyntax = wikisyntax;
-};
+  this.type = type
+  this.bibtex = bibtex
+  this.wikisyntax = wikisyntax
+}
 var item = [
   new Item("header","@article","<ref>{{cite journal"),
   new Item("header","@book","<ref>{{cite book"),
@@ -24,7 +22,8 @@ var item = [
   new Item("header","@phdthesis","<ref>{{cite thesis |type=PhD"),
   new Item("header","@techreport","<ref>{{cite techreport"),
   new Item("header","@incollection","<ref>{{Citation"),
-    
+  
+  new Item("field","url","url"),
   new Item("field","booktitle","conference"),
   new Item("field","title","title"),
   new Item("field","author","author"),
@@ -38,20 +37,13 @@ var item = [
   new Item("field","institution","institution"),
   new Item("field","number","number"),
   new Item("field","doi","doi"),
-  new Item("field","url","url"),
-  
-  new Item("footer","}","}}</ref>\n\n"),
+  new Item("footer","}\n","}}</ref>\n\n"),
 ];
-function matchitem(str) {
-  // searches for str in item, returns itemid or -1 (error)
-  result=-1
-  for (var i=0;i<item.length;i++) { 
-    if(str.indexOf(item[i].bibtex)!=-1) { 
-      result=i
-      break
-    }
-  } 
-  return result
+var dict = {
+  "inputstring": "",
+  "markupid": -1,
+  "bibtex": "",
+  "outputstring": "",
 }
 function stripline(text,leftsymbol,rightsymbol) {
   // extract text between characters
@@ -59,57 +51,85 @@ function stripline(text,leftsymbol,rightsymbol) {
   var p2=text.indexOf(rightsymbol)
   return text.substring(p1,p2)
 }
-function parseline(str,lookupid) {
+
+function setmarkupid(str) {
+  // searches for str in item
+  result=-1
+  if(str.length==1) { // footer
+    str+="\n"
+  }
+  for (var i=0;i<item.length;i++) { 
+    if(str.indexOf(item[i].bibtex)!=-1) { // near match
+      result=i
+      break
+    }
+  }
+  dict["inputstring"]= str
+  dict["markupid"]= result
+  if (result==-1) { 
+    dict["bibtex"]="notfound"
+    dict["outputstring"]=""
+  }
+  else { dict["bibtex"]= item[result].bibtex }
+}
+function parseline() {
   // bibtext to mediawiki
   var result=""
-  if(lookupid==-1) { // line wasn't recognized, return empty string
-    return result
-  }
-  var type=item[lookupid].type
-  var wikisyntax=item[lookupid].wikisyntax
+  var markupid=dict["markupid"]
+  var wikisyntax=item[markupid].wikisyntax
+  var type=item[markupid].type
   if(type=="header" || type=="footer") {
-    result+=wikisyntax
+    result=wikisyntax
   }
   else if(type=="field") {
-    result+=" |"+wikisyntax+"=" 
-    result+=stripline(str,"{","}")
+    // regex help: /g = global |=or $=last character
+    var temp=dict["inputstring"]
+    temp = temp.replace(dict["bibtex"],"") // remove bibtex name
+    temp = temp.replace(/=|{|}|,$/g,"") // remove special characters: { } ,
+    temp = temp.replace(/^\s+/g,"") // remove leading whitespaces
+    result+=" |"+wikisyntax+"="+temp
   }
-  return result
+  dict["outputstring"]=result
 }
 function buttonconvert() {
   document.getElementById('outputbox').value = ""
   var lines=document.getElementById("inputbox").value.split("\n")
   for (var i=0;i<lines.length;i++) { 
-    var lookupid=matchitem(lines[i])
-    var text=parseline(lines[i],lookupid)  
-    document.getElementById('outputbox').value +=text 
+    setmarkupid(lines[i])
+    if (dict["markupid"]!=-1) {
+      parseline()
+    }
+    document.getElementById('outputbox').value +=dict["outputstring"] 
   }
 }
 function buttondebug() {
   var i=document.getElementById('debugline').value
-  document.getElementById('outputbox').value = ""
   var lines=document.getElementById("inputbox").value.split("\n")
-  var lookupid=matchitem(lines[i])
-  var convert=parseline(lines[i],lookupid)
+  setmarkupid(lines[i])
+  if (dict["markupid"]!=-1) {
+    parseline()
+  }
   var text="debug mode for line "+i
   text+="\n-----------------------\n"
-  text+="markup id ="+lookupid+" "+"\n"
-  text+="markup name ="+item[lookupid].bibtex+"\n"
-  text+="input string ="+lines[i]+"\n"
-  text+="output string ="+convert+"\n"
-  document.getElementById('outputbox').value +=text
+  text+="inputstring: "+dict["inputstring"]+"\n"
+  text+="markupid: "+dict["markupid"]+"\n"
+  text+="markupname: "+dict["bibtex"]+"\n"
+  text+="outputstring: "+dict["outputstring"]+"\n"
+  document.getElementById('outputbox').value =text
 }
+  
 function buttonreset() {
   // version info
   document.getElementById('labelversion').innerHTML = "version "+version
   // default bibtex input
-  var text = `@inproceedings{white2000,
-  title={ArgivePlexus: Multimodal, introspective communication},
-  author={N. White and J. Hennessy},
-  booktitle={Journal of Flexible, Stable Random Methodologies},
-  pages={1--11},
-  volume={9},
-  year={2000}
+  var text = `@article{lastname2019,
+  title = {The title of the article},
+  author = {firstname lastname},
+  journal={name of the academic journal},
+  pages= {20--30},
+  volume= {4},
+  doi = {15.119/ia.2019.654398},
+  year= {2019},
 }
   ` // <----------- end multiline string
   document.getElementById('inputbox').value = text
@@ -124,7 +144,7 @@ function buttonreset() {
 <form name="form1">
   <label id="labelversion"></label><br>
   <p>
-  <textarea id="inputbox" cols="60" rows="13"> </textarea><textarea id="outputbox" cols="60" rows="13"></textarea>
+  <textarea id="inputbox" cols="62" rows="15"> </textarea><textarea id="outputbox" cols="62" rows="15"></textarea>
   <p>
   <input type="button" name="submit" value="convert" onclick="buttonconvert();" />
   <input type="button" name="submit" value="reset" onclick="buttonreset();" />

@@ -11,7 +11,11 @@ What the user has to do is to download the HTML file into a working directory, a
 ![screenshot](/screenshot.png)
 
 ### Changelog
+version 0.6
 
+- Javascript prototypes instead of plain functions
+- hideurl  
+  
 version 0.54
 
 - rewrite of parseline

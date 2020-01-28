@@ -2,12 +2,12 @@
 <script language="javascript" type="text/javascript">
 /*
 Bibtex to mediawiki converter
-
+  
 */  
-var version=0.6
+var version=0.7
 var defaultbibtex = `@article{lastname2019,
   title = {The title of the article},
-  author = {firstname lastname},
+  author = {James Kl{\\"o}ckner},
   year= {2019},
   journal={name of the academic journal},
   pages= {20--30},
@@ -45,11 +45,15 @@ function Parser() {
     new Item("field","organization","publisher"),
     new Item("field","school","publisher"),
     new Item("field","volume","volume"),
+    new Item("field","issue","issue"),
     new Item("field","institution","institution"),
     new Item("field","number","number"),
     new Item("field","doi","doi"),
-    new Item("footer","}\n","}}</ref>\n\n"),
+    new Item("footer","}\n"," }}</ref>\n"),
   ]
+  
+  // https://en.wikipedia.org/wiki/Template:Predatory_open_access_source_list
+  this.rule891regex = RegExp("10\.(11648|1166|1234|12677|12692|12720|12988|13005|13172|13188|14257|14303|14419|1453|14569|14662|15415|15373|15761|17265|18005|18052|18311|18775|19030|19044|19070|19080|1999|20472|20849|20902|21102|21767|22158|23937|2495|30654|30845|35841|36648|3844|3923|3968|4018|4156|4172|4236|4303|5267|5296|5376|5430|5455|5539|5567|5580|5772|5812|5815|5829|5897|5899|5923|5963|6007|7243|7439|7537|7575|7718|7763|9734)")
 } 
 Parser.prototype.run= function(lines,hideurl) {
   // convert multiline into wikitext
@@ -93,15 +97,24 @@ Parser.prototype.parseline= function(hideurl) {
   else if(type=="field") {
     // regex help: /g = global |=or $=last character
     var temp=this.dict["inputstring"]
-    temp = temp.replace(this.dict["bibtex"],"") // remove bibtex name
-    temp = temp.replace(/=|{|}|,$/g,"") // remove special characters: { } ,
-    temp = temp.replace(/^\s+/g,"") // remove leading whitespaces
+    // remove charcaters
+    temp = temp.replace(this.dict["bibtex"],"") // bibtex name
+    temp = temp.replace(/=|{|}|,$/g,"") //  = { } ,
+    temp = temp.replace(/\\"|\\'/g,"") //   \" \'
+    temp = temp.replace(/^\s+/g,"") //      leading whitespaces
     // check for url tag
     if(this.dict["bibtex"]=="url" && hideurl) {
-      result=result // don't print url 
+      true // do nothing
     }
     else {
       result+=" |"+wikisyntax+"="+temp
+    }
+  }
+  // check for rule 891
+  if (this.dict["bibtex"]=="doi") {
+    var temp=this.rule891regex.test(result)
+    if (temp==true) {
+      result+=" rule891=" +temp
     }
   }
   this.dict["outputstring"]=result

@@ -2,15 +2,20 @@
 Converts Bibtex format into mediawiki syntax which is spoken by a famous encyclopedia 
 
 ### Description
-Creating a Wikipedia article or extending an existing one is only possible, if academic references are used. Unfortunately, the mediawiki system isn't using the bibtex format, but has developed it's own citation template. Converting from existing bibtex bibliographic references into the Mediawiki citation format is possible with the following Javascript project.
+It's not possible to enter bibtex formatted bibliographic references directly into the mediawiki editor. If someone likes to contribute to the online encyclopedia, he has to provide the references in the citation format of mediawiki. For doing so, the HTML file is downloaded into a working directory, a bookmark is created for the file and then the user can copy&paste the bibtex file into the left window.
 
-What the user has to do is to download the HTML file into a working directory, and open it in a webbrowser. Then, the bibtex citation is put into the left window and the converter produces the appropriate Mediawiki syntax.
+The converter is parsing the items, modifies the special characters and removes the white spaces.
 
 ### Screenshot
 
 ![screenshot](/screenshot.png)
 
 ### Changelog
+version 0.7
+- remove special characters in bibtex: \" \'
+- rule 891 for detecting invalid DOI
+- example bibtex with special character
+
 version 0.6
 
 - Javascript prototypes instead of plain functions

@@ -11,6 +11,10 @@ The converter is parsing the items, modifies the special characters and removes 
 ![screenshot](/screenshot.png)
 
 ### Changelog
+version 0.71
+* rule891 with linebreak
+* convert @incollection into "cite conference"
+
 version 0.7
 - remove special characters in bibtex: \" \'
 - rule 891 for detecting invalid DOI

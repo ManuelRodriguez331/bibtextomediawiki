@@ -2,12 +2,12 @@
 Converts Bibtex format into mediawiki syntax which is spoken by a famous encyclopedia 
 
 ### Description
-It's not possible to enter bibtex formatted bibliographic references directly into the mediawiki editor. If someone likes to contribute to the online encyclopedia, he has to provide the references in the citation format of mediawiki. For doing so, the HTML file is downloaded into a working directory, a bookmark is created for the file and then the user can copy&paste the bibtex file into the left window.
+It's not possible to enter bibtex formatted bibliographic references directly into the mediawiki editor. If someone likes to contribute to the online encyclopedia, he has to provide the references in the citation format of mediawiki. The converter is parsing the items, modifies the special characters and removes the white spaces.
 
-The converter is parsing the items, modifies the special characters and removes the white spaces.
+### Installation
+The release version is stored in the stable/ folder. It should be downloaded into the working directory of the user. Next, a bookmark is created manual. The user can copy&paste the bibtex file into the left window and gets the result in the right window.
 
 ### Screenshot
-
 ![screenshot](/screenshot.png)
 
 ### Changelog

@@ -4,7 +4,7 @@
 Bibtex to mediawiki converter
   
 */  
-var version=0.7
+var version=0.71
 var defaultbibtex = `@article{lastname2019,
   title = {The title of the article},
   author = {James Kl{\\"o}ckner},
@@ -33,7 +33,7 @@ function Parser() {
     new Item("header","@inproceedings","<ref>{{cite conference"),
     new Item("header","@phdthesis","<ref>{{cite thesis |type=PhD"),
     new Item("header","@techreport","<ref>{{cite techreport"),
-    new Item("header","@incollection","<ref>{{Citation"),
+    new Item("header","@incollection","<ref>{{cite conference"),
     new Item("field","url","url"),
     new Item("field","booktitle","conference"),
     new Item("field","title","title"),
@@ -114,7 +114,9 @@ Parser.prototype.parseline= function(hideurl) {
   if (this.dict["bibtex"]=="doi") {
     var temp=this.rule891regex.test(result)
     if (temp==true) {
-      result+=" rule891=" +temp
+      result+="\n-------------\n"
+      result+="rule891=" +temp
+      result+="\n-------------\n"
     }
   }
   this.dict["outputstring"]=result

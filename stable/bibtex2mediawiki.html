@@ -1,0 +1,198 @@
+<!doctype html>
+<script language="javascript" type="text/javascript">
+/*
+Bibtex to mediawiki converter
+  
+*/  
+var version=0.7
+var defaultbibtex = `@article{lastname2019,
+  title = {The title of the article},
+  author = {James Kl{\\"o}ckner},
+  year= {2019},
+  journal={name of the academic journal},
+  pages= {20--30},
+  volume= {4},
+  doi = {15.119/ia.2019.654398},
+  url = {http://www.small-university.edu/~prof/35583.pdf},\n}` // <-- end multiline string
+    
+var Item = function(type,bibtex,wikisyntax) {
+  this.type = type
+  this.bibtex = bibtex
+  this.wikisyntax = wikisyntax
+}
+function Parser() {    
+  this.dict = {
+    "inputstring": "",
+    "markupid": -1,
+    "bibtex": "",
+    "outputstring": "",
+  }
+  this.item = [
+    new Item("header","@article","<ref>{{cite journal"),
+    new Item("header","@book","<ref>{{cite book"),
+    new Item("header","@inproceedings","<ref>{{cite conference"),
+    new Item("header","@phdthesis","<ref>{{cite thesis |type=PhD"),
+    new Item("header","@techreport","<ref>{{cite techreport"),
+    new Item("header","@incollection","<ref>{{Citation"),
+    new Item("field","url","url"),
+    new Item("field","booktitle","conference"),
+    new Item("field","title","title"),
+    new Item("field","author","author"),
+    new Item("field","journal","journal"),
+    new Item("field","pages","pages"),
+    new Item("field","year","year"),
+    new Item("field","publisher","publisher"),
+    new Item("field","organization","publisher"),
+    new Item("field","school","publisher"),
+    new Item("field","volume","volume"),
+    new Item("field","issue","issue"),
+    new Item("field","institution","institution"),
+    new Item("field","number","number"),
+    new Item("field","doi","doi"),
+    new Item("footer","}\n"," }}</ref>\n"),
+  ]
+  
+  // https://en.wikipedia.org/wiki/Template:Predatory_open_access_source_list
+  this.rule891regex = RegExp("10\.(11648|1166|1234|12677|12692|12720|12988|13005|13172|13188|14257|14303|14419|1453|14569|14662|15415|15373|15761|17265|18005|18052|18311|18775|19030|19044|19070|19080|1999|20472|20849|20902|21102|21767|22158|23937|2495|30654|30845|35841|36648|3844|3923|3968|4018|4156|4172|4236|4303|5267|5296|5376|5430|5455|5539|5567|5580|5772|5812|5815|5829|5897|5899|5923|5963|6007|7243|7439|7537|7575|7718|7763|9734)")
+} 
+Parser.prototype.run= function(lines,hideurl) {
+  // convert multiline into wikitext
+  // input: hideurl=true/false
+  var result=""
+  for (var i=0;i<lines.length;i++) { 
+    this.setmarkupid(lines[i])
+    this.parseline(hideurl)
+    result +=this.dict["outputstring"] 
+  }
+  return result  
+} 
+Parser.prototype.singlestep= function(line) {
+  // input: single line
+  // output: debug information from the parser
+  this.setmarkupid(line)
+  this.parseline()
+  var result="debug mode"
+  result+="\n-------------\n"
+  result+="inputstring: "+this.dict["inputstring"]+"\n"
+  result+="markupid: "+this.dict["markupid"]+"\n"
+  result+="markupname: "+this.dict["bibtex"]+"\n"
+  result+="outputstring: "+this.dict["outputstring"]+"\n"
+  return result
+  
+} 
+Parser.prototype.parseline= function(hideurl) {
+  // bibtext to mediawiki
+  // hideurl=true/false
+  var result=""
+  var markupid=this.dict["markupid"]
+  if(markupid==-1) { // no parsing needed, exist routine
+    return false
+  }
+  // parseline
+  var wikisyntax=this.item[markupid].wikisyntax
+  var type=this.item[markupid].type
+  if(type=="header" || type=="footer") {
+    result=wikisyntax
+  }
+  else if(type=="field") {
+    // regex help: /g = global |=or $=last character
+    var temp=this.dict["inputstring"]
+    // remove charcaters
+    temp = temp.replace(this.dict["bibtex"],"") // bibtex name
+    temp = temp.replace(/=|{|}|,$/g,"") //  = { } ,
+    temp = temp.replace(/\\"|\\'/g,"") //   \" \'
+    temp = temp.replace(/^\s+/g,"") //      leading whitespaces
+    // check for url tag
+    if(this.dict["bibtex"]=="url" && hideurl) {
+      true // do nothing
+    }
+    else {
+      result+=" |"+wikisyntax+"="+temp
+    }
+  }
+  // check for rule 891
+  if (this.dict["bibtex"]=="doi") {
+    var temp=this.rule891regex.test(result)
+    if (temp==true) {
+      result+=" rule891=" +temp
+    }
+  }
+  this.dict["outputstring"]=result
+}
+Parser.prototype.setmarkupid= function(str) {
+  // searches for str in item
+  result=-1
+  if(str.length==1) { // footer
+    str+="\n"
+  }
+  for (var i=0;i<this.item.length;i++) { 
+    if(str.indexOf(this.item[i].bibtex)!=-1) { // near match
+      result=i
+      break
+    }
+  }
+  this.dict["inputstring"]= str
+  this.dict["markupid"]= result
+  if (result==-1) { 
+    this.dict["bibtex"]="notfound"
+    this.dict["outputstring"]=""
+  }
+  else { 
+    this.dict["bibtex"]= this.item[result].bibtex
+  }
+}
+
+// event handler for html form
+function button(actionname) {
+  if(actionname=="debug") {
+    // get form data
+    var i=document.getElementById('debugline').value
+    var lines=document.getElementById("inputbox").value.split("\n")
+    var line=lines[i]
+    // singlestep
+    var temp=myparser.singlestep(line)
+    document.getElementById('outputbox').value =temp
+  }
+  else if(actionname=="reset") {
+    document.getElementById('labelversion').innerHTML = "version "+version
+    document.getElementById('outputbox').value=""
+    document.getElementById('inputbox').value = defaultbibtex
+  }
+  else if(actionname=="convert") {
+    var lines=document.getElementById("inputbox").value.split("\n")
+    var hideurl=document.getElementById('checkboxhideurl').checked
+    var temp=myparser.run(lines,hideurl)
+    document.getElementById('outputbox').value=temp
+  }
+}
+
+myparser= new Parser()
+
+</script>
+
+<html> 
+<head>
+<meta charset="utf-8">
+<title>Bibtex to mediawiki converter</title>
+<body>
+<h3>BibTeX to MediaWiki converter</h3>
+<form name="form1">
+  <label id="labelversion"></label><br>
+  <p>
+  <textarea id="inputbox" cols="62" rows="15">
+  </textarea><textarea id="outputbox" cols="62" rows="15"></textarea>
+  <p>
+  hide url: <input type="checkbox" id="checkboxhideurl" checked><br>
+  <input type="button" name="submit" value="convert" onclick="button('convert')" />
+  <input type="button" name="submit" value="reset" onclick="button('reset')" />
+  <p><p>
+  line <input type="text" value="0" id="debugline" size="4"/>
+  <input type="button" name="submit" value="debug" onclick="button('debug')" />
+</form>  
+
+</body>
+</html>
+
+<script language="javascript" type="text/javascript">
+  button('reset')
+</script>
